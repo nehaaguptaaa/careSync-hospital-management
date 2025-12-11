@@ -1,17 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import API from "../services/Api";
 import { Link } from "react-router-dom";
+import { authContext } from "../components/AuthContext";
 
 function DoctorList() {
   const [doctors, setDoctors] = useState([]);
   const [specialization, setSpecialization] = useState("");
+  const { token } = useContext(authContext);
 
   useEffect(() => {
     loadDoctors();
   }, []);
 
   const loadDoctors = () => {
-    API.get("/doctors")
+    API.get("/doctors", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
       .then((res) => setDoctors(res.data))
       .catch((err) => console.log(err));
   };
@@ -19,7 +25,11 @@ function DoctorList() {
   const handleDelete = (id) => {
     if (!window.confirm("Are you sure you want to delete this doctor?")) return;
 
-    API.delete(`/doctors/${id}`)
+    API.delete(`/doctors/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
       .then(() => loadDoctors())
       .catch((err) => console.log(err));
   };
@@ -44,8 +54,8 @@ function DoctorList() {
           onChange={(e) => setSpecialization(e.target.value)}
         >
           {uniqueSpecializations.map((spec, index) => (
-            <option 
-              key={index} 
+            <option
+              key={index}
               value={spec === "All" ? "" : spec}
             >
               {spec}
@@ -80,8 +90,8 @@ function DoctorList() {
                 <td>{d.experience}</td>
 
                 <td>
-                  <Link 
-                    to={`/doctors/edit/${d.id}`} 
+                  <Link
+                    to={`/doctors/edit/${d.id}`}
                     className="btn btn-warning btn-sm me-2"
                   >
                     Edit
@@ -98,6 +108,7 @@ function DoctorList() {
             ))}
         </tbody>
       </table>
+
     </div>
   );
 }

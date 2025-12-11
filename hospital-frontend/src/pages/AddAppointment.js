@@ -1,26 +1,37 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import API from "../services/Api";
 import { useNavigate } from "react-router-dom";
+import { authContext } from "../components/AuthContext";
 
 function AddAppointment() {
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const { token } = useContext(authContext);
 
   const [form, setForm] = useState({
     patientId: "",
     doctorId: "",
     date: "",
     time: "",
-    status: "SCHEDULED"
+    status: "SCHEDULED",
   });
 
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
-    API.get("/patients").then((res) => setPatients(res.data));
-    API.get("/doctors").then((res) => setDoctors(res.data));
-  }, []);
+    API.get("/patients", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => setPatients(res.data))
+      .catch((err) => console.log(err));
+
+    API.get("/doctors", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => setDoctors(res.data))
+      .catch((err) => console.log(err));
+  }, [token]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -34,7 +45,6 @@ function AddAppointment() {
     if (!form.patientId) newErrors.patientId = "Please select a patient";
     if (!form.doctorId) newErrors.doctorId = "Please select a doctor";
 
-    // date validation
     const today = new Date();
     const selectedDate = new Date(form.date);
 
@@ -53,10 +63,15 @@ function AddAppointment() {
     if (!form.status) newErrors.status = "Please select a status";
 
     setErrors(newErrors);
-
     if (Object.keys(newErrors).length > 0) return;
 
-    API.post("/appointments", form)
+    // -----------------------------
+    // FINAL FIX → TOKEN INCLUDED
+    API.post("/appointments", form, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then(() => navigate("/appointments"))
       .catch((err) => console.log(err));
   };
@@ -70,7 +85,6 @@ function AddAppointment() {
 
         <div className="card-body">
           <form onSubmit={handleSubmit}>
-
             {/* Patient */}
             <div className="mb-3">
               <label className="form-label">Patient</label>
@@ -81,10 +95,14 @@ function AddAppointment() {
               >
                 <option value="">Select Patient</option>
                 {patients.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
                 ))}
               </select>
-              {errors.patientId && <div className="text-danger">{errors.patientId}</div>}
+              {errors.patientId && (
+                <div className="text-danger">{errors.patientId}</div>
+              )}
             </div>
 
             {/* Doctor */}
@@ -102,7 +120,9 @@ function AddAppointment() {
                   </option>
                 ))}
               </select>
-              {errors.doctorId && <div className="text-danger">{errors.doctorId}</div>}
+              {errors.doctorId && (
+                <div className="text-danger">{errors.doctorId}</div>
+              )}
             </div>
 
             {/* Date */}
@@ -114,7 +134,9 @@ function AddAppointment() {
                 className="form-control"
                 onChange={handleChange}
               />
-              {errors.date && <div className="text-danger">{errors.date}</div>}
+              {errors.date && (
+                <div className="text-danger">{errors.date}</div>
+              )}
             </div>
 
             {/* Time */}
@@ -126,7 +148,9 @@ function AddAppointment() {
                 className="form-control"
                 onChange={handleChange}
               />
-              {errors.time && <div className="text-danger">{errors.time}</div>}
+              {errors.time && (
+                <div className="text-danger">{errors.time}</div>
+              )}
             </div>
 
             {/* Status */}
@@ -142,13 +166,14 @@ function AddAppointment() {
                 <option value="COMPLETED">Completed</option>
                 <option value="CANCELLED">Cancelled</option>
               </select>
-              {errors.status && <div className="text-danger">{errors.status}</div>}
+              {errors.status && (
+                <div className="text-danger">{errors.status}</div>
+              )}
             </div>
 
             <button className="btn btn-success w-100" type="submit">
               Save Appointment
             </button>
-
           </form>
         </div>
       </div>

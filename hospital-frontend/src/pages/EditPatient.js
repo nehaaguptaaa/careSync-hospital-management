@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "../services/Api";
+import { authContext } from "../components/AuthContext";
 
 function EditPatient() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { token } = useContext(authContext);
 
   const [form, setForm] = useState({
     name: "",
@@ -17,11 +19,14 @@ function EditPatient() {
 
   const [errors, setErrors] = useState({});
 
+  // Fetch patient by ID
   useEffect(() => {
-    API.get(`/patients/${id}`)
+    API.get(`/patients/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
       .then((res) => setForm(res.data))
       .catch((err) => console.log(err));
-  }, [id]);
+  }, [id, token]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -31,19 +36,20 @@ function EditPatient() {
     e.preventDefault();
 
     let newErrors = {};
-
     if (!form.name.trim()) newErrors.name = "Name is required";
     if (form.age < 0 || form.age > 120)
       newErrors.age = "Age must be between 0 and 120";
     if (!/^\d{10}$/.test(form.phone))
       newErrors.phone = "Phone number must be 10 digits";
-    if (!form.disease.trim())
-      newErrors.disease = "Disease is required";
+    if (!form.disease.trim()) newErrors.disease = "Disease is required";
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
-    API.put(`/patients/${id}`, form)
+    // PUT request for updating
+    API.put(`/patients/${id}`, form, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
       .then(() => navigate("/patients"))
       .catch((err) => console.log(err));
   };

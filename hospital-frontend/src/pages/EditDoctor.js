@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "../services/Api";
+import { authContext } from "../components/AuthContext";
 
 function EditDoctor() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { token } = useContext(authContext);   // ✔ FIXED
 
   const [form, setForm] = useState({
     name: "",
@@ -17,10 +19,12 @@ function EditDoctor() {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    API.get(`/doctors/${id}`)
+    API.get(`/doctors/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }   // ✔ ADDED TOKEN
+    })
       .then((res) => setForm(res.data))
       .catch((err) => console.log(err));
-  }, [id]);
+  }, [id, token]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -43,7 +47,9 @@ function EditDoctor() {
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
-    API.put(`/doctors/${id}`, form)
+    API.put(`/doctors/${id}`, form, {
+      headers: { Authorization: `Bearer ${token}` }   // ✔ ADDED TOKEN
+    })
       .then(() => navigate("/doctors"))
       .catch((err) => console.log(err));
   };

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "../services/Api";
+import { authContext } from "../components/AuthContext";
 
 function EditAppointment() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { token } = useContext(authContext); // ✔ FIXED
 
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -20,7 +22,10 @@ function EditAppointment() {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    API.get(`/appointments/${id}`)
+    // ✔ GET appointment details with token
+    API.get(`/appointments/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
       .then((res) => {
         setForm({
           patientId: res.data.patient.id,
@@ -32,9 +37,21 @@ function EditAppointment() {
       })
       .catch((err) => console.log(err));
 
-    API.get("/patients").then((res) => setPatients(res.data));
-    API.get("/doctors").then((res) => setDoctors(res.data));
-  }, [id]);
+    // ✔ GET patients with token
+    API.get("/patients", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => setPatients(res.data))
+      .catch((err) => console.log(err));
+
+    // ✔ GET doctors with token
+    API.get("/doctors", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => setDoctors(res.data))
+      .catch((err) => console.log(err));
+
+  }, [id, token]); 
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -65,10 +82,12 @@ function EditAppointment() {
     if (!form.status) newErrors.status = "Please select a status";
 
     setErrors(newErrors);
-
     if (Object.keys(newErrors).length > 0) return;
 
-    API.put(`/appointments/${id}`, form)
+    // ⭐ FINAL FIX → PUT request with JWT token
+    API.put(`/appointments/${id}`, form, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
       .then(() => navigate("/appointments"))
       .catch((err) => console.log(err));
   };

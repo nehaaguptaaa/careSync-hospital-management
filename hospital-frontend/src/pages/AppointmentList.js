@@ -1,26 +1,38 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import API from "../services/Api";
 import { Link } from "react-router-dom";
+import { authContext } from "../components/AuthContext";
 
 function AppointmentList() {
   const [appointments, setAppointments] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
 
+  const { token } = useContext(authContext);
+
   useEffect(() => {
     loadAppointments();
   }, []);
 
   const loadAppointments = () => {
-    API.get("/appointments")
+    API.get("/appointments", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then((res) => setAppointments(res.data))
       .catch((err) => console.log(err));
   };
 
+  // ✅ FIXED delete logic with Authorization token
   const handleDelete = (id) => {
-    if (!window.confirm("Are you sure?")) return;
+    if (!window.confirm("Are you sure you want to delete this appointment?")) return;
 
-    API.delete(`/appointments/${id}`)
+    API.delete(`/appointments/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then(() => loadAppointments())
       .catch((err) => console.log(err));
   };

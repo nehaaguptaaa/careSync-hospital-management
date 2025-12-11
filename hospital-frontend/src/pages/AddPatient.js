@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/Api";
+import { authContext } from "../components/AuthContext";
 
 function AddPatient() {
   const navigate = useNavigate();
+  const { token } = useContext(authContext);
 
   const [form, setForm] = useState({
     name: "",
@@ -39,7 +41,14 @@ function AddPatient() {
 
     if (Object.keys(newErrors).length > 0) return;
 
-    API.post("/patients", form)
+    // -----------------------------
+    // 🔥 API request with token
+    // -----------------------------
+    API.post("/patients", form, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
       .then(() => navigate("/patients"))
       .catch((err) => console.log(err));
   };

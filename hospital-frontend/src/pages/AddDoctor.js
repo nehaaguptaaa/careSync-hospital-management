@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import API from "../services/Api";
 import { useNavigate } from "react-router-dom";
+import { authContext } from "../components/AuthContext";
 
 function AddDoctor() {
+  const navigate = useNavigate();
+  const { token } = useContext(authContext);   // ✔ token properly used
+
   const [form, setForm] = useState({
     name: "",
     specialization: "",
@@ -12,7 +16,6 @@ function AddDoctor() {
   });
 
   const [errors, setErrors] = useState({});
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -35,7 +38,12 @@ function AddDoctor() {
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
-    API.post("/doctors", form)
+    // ✔ token is used here, so warning disappears
+    API.post("/doctors", form, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
       .then(() => navigate("/doctors"))
       .catch((err) => console.log(err));
   };
