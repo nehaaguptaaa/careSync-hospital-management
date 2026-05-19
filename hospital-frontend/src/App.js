@@ -14,7 +14,7 @@ import EditDoctor from "./pages/EditDoctor";
 import EditAppointment from "./pages/EditAppointment";
 import Login from "./components/Login";
 
-// Wrapper to hide navbar & footer on login page
+//  hide navbar & footer on login page
 function Layout({ children }) {
   const location = useLocation();
 
